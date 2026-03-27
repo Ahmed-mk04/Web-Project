@@ -15,7 +15,7 @@
     
 
 
-/* ===== HEADER ===== */
+/* en-tête */
 .header {
     position: sticky;
     top: 0;
@@ -26,6 +26,8 @@
     padding: 15px 60px;
     box-shadow: 0 4px 15px rgba(0,0,0,0.05);
     z-index: 100;
+    /* needed so absolute children (btn-login) are anchored here */
+    position: relative;
 }
 .logo {
     font-size: 26px;
@@ -55,6 +57,12 @@
     color: #777;
 }
 
+.nav {
+    display: flex;
+    align-items: center;
+    padding-right: 0;
+}
+
 .nav a {
     margin-left: 25px;
     text-decoration: none;
@@ -68,6 +76,7 @@
     padding: 8px 18px;
     border-radius: 25px;
     transition: 0.3s;
+    white-space: nowrap;
 }
 
 .btn-login:hover {
@@ -114,7 +123,7 @@
 .btn-small:hover {
     background: #401bb5;
 }
-/* ===== HERO ===== */
+/* intro */
 .hero {
   background-size: cover;
   background-position: center;
@@ -141,7 +150,7 @@
     margin-bottom: 20px;
 }
 
-/* ===== FILTRE PAR SPECIALITE ===== */
+/* filtre */
 .filter-bar {
     background: #ffffff;
     padding: 25px 60px;
@@ -184,7 +193,7 @@
     background: #401bb5;
     transform: scale(1.05);
 }
-/* ===== ABOUT ===== */
+/* à propos */
 .hero-text h1 {
     font-size: 48px;
     margin-bottom: 15px;
@@ -257,7 +266,7 @@
     animation: float 3s infinite ease-in-out;
 }
 
-/* ===== BADGE CLE D'INSCRIPTION ===== */
+/* badge */
 .course-card .access-key {
     display: inline-block;
     background: rgba(86, 36, 208, 0.1);
@@ -286,7 +295,7 @@
 }
 
 
-/* ===== CONTACT ===== */
+/* contact */
 .about {
     padding: 80px 60px;
     text-align: center;
@@ -304,7 +313,7 @@
     font-size: 18px;
 }
 
-/* ===== SERVICES ===== */
+/* contenu */
 .services {
     background: #fff;
     padding: 60px;
@@ -335,7 +344,7 @@
     transform: translateY(-10px);
 }
 
-/* ===== CONTACT ===== */
+/* contact */
 .contact {
     padding: 60px;
     text-align: center;
@@ -366,14 +375,14 @@
     transform: scale(1.2);
 }
 
-/* ===== FOOTER ===== */
+/* pied de page */
 .footer {
     background: #111;
     color: #fff;
     text-align: center;
     padding: 20px;
 }
-/* ===== COURSES ===== */
+/* Cours */
 .courses {
     padding: 60px;
 }
@@ -433,7 +442,7 @@
     border-radius: 20px;
     font-size: 13px;
 }
-/* ===== animation ===== */
+/* animations */
 @keyframes slideIn {
     from {opacity: 0; transform: translateX(-50px);}
     to {opacity: 1; transform: translateX(0);}
@@ -502,7 +511,7 @@
         padding: 40px 20px;
     }
 }
-/* ===== Css progrssion dashboard ===== */
+/* progression */
 .courses-dashboard .progress-bar {
     width: 100%;
     height: 10px;
@@ -518,8 +527,8 @@
     transition: width 0.5s ease;
 }
 
-/* ===== enseignant ===== */
-/* ===== Enseignant ===== */
+/* section enseignant */
+/* section enseignant */
 .enseignant-photo {
     width: 150px;
     height: 150px;
@@ -616,7 +625,7 @@
 
 
 
-/* ===== profils ===== */
+/* profil */
 .profile-section {
     padding: 80px 20px;
     text-align: center;
@@ -664,7 +673,7 @@
     gap: 20px;
     padding: 100px 20px;
 }
-/* ===== PRICING HERO ===== */
+/* titre tarifs */
 .pricing-hero {
     padding: 80px 60px;
     text-align: center;
@@ -681,7 +690,7 @@
     font-size: 18px;
     opacity: 0.9;
 }
-/* ===== PRICING ===== */
+/* grille tarifs */
 .pricing {
     padding: 80px 60px;
 }
@@ -805,7 +814,7 @@ background: #5624d0;
     transform: scale(1.05);
 }
 
-/* ===== DASHBOARD ADMIN ===== */
+/* dashboard admin */
 .admin-container {
     max-width: 1200px;
     margin: 2rem auto;
@@ -862,7 +871,7 @@ table th, table td {
     background-color: #1a5;
 }
 
-/* ===== MODALS ===== */
+/* modals */
 .modal {
     display: none;
     position: fixed;
@@ -901,7 +910,7 @@ table th, table td {
 
 
 
-    /* ===== HERO COURS ===== */
+    /* hero cours */
 .cours-hero {
     display: flex;
     justify-content: space-between;
@@ -925,7 +934,7 @@ table th, table td {
     max-width: 100%;
 }
 
-/* ===== SUPPORTS ===== */
+/* supports */
 .cours-supports {
     padding: 40px 20px;
 }
@@ -974,7 +983,7 @@ table th, table td {
     margin-top: 15px;
 }
 
-/* ===== ÉVALUATIONS ===== */
+/* évaluations */
 .cours-evaluations {
     padding: 40px 20px;
     background: #f4f4f4;
@@ -1024,7 +1033,7 @@ table th, table td {
     margin-top: 15px;
 }
 
-/* ===== FORUM ===== */
+/* forum */
 .forum {
     padding: 40px 20px;
     background-color: #fff;
@@ -1082,7 +1091,7 @@ table th, table td {
     transform: scale(1.03);
 }
 
-/* ===== Responsive ===== */
+/* mobile */
 @media (max-width: 768px) {
     .cours-hero {
         flex-direction: column;

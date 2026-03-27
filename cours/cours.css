@@ -1,4 +1,4 @@
-/* ===== FONTS ===== */
+/* polices */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap");
 
 * {
@@ -13,7 +13,7 @@ body {
     min-height: 100vh;
 }
 
-/* ===== HEADER ===== */
+/* en-tête */
 .header {
     width: 100%;
     background-color: #fff;
@@ -25,6 +25,8 @@ body {
     position: sticky;
     top: 0;
     z-index: 10;
+    /* anchor for absolute btn-login */
+    position: relative;
 }
 
 .header .logo {
@@ -43,19 +45,26 @@ body {
     font-weight: 500;
 }
 
+.nav {
+    display: flex;
+    align-items: center;
+    padding-right: 0;
+}
+
 .nav a.btn-login {
     background-color: #5624d0;
     color: #fff;
     padding: 6px 16px;
     border-radius: 25px;
     transition: 0.3s;
+    white-space: nowrap;
 }
 
 .nav a.btn-login:hover {
     transform: scale(1.05);
 }
 
-/* ===== HERO ===== */
+/* intro */
 .course-hero {
     text-align: center;
     padding: 50px 20px;
@@ -73,7 +82,7 @@ body {
     color: #555;
 }
 
-/* ===== COURSE LAYOUT ===== */
+/* structure page */
 .course-container {
     display: flex;
     max-width: 1200px;
@@ -82,7 +91,7 @@ body {
     gap: 30px;
 }
 
-/* ===== SIDEBAR ===== */
+/* menu latéral */
 .course-menu {
     width: 250px;
     background-color: #fff;
@@ -119,7 +128,7 @@ body {
     color: #fff;
 }
 
-/* ===== MAIN CONTENT ===== */
+/* contenu principal */
 .course-content {
     flex: 1;
     background-color: #fff;
@@ -139,14 +148,14 @@ body {
     color: #555;
 }
 
-/* ===== VIDEO ===== */
+/* vidéos */
 .course-content video {
     width: 100%;
     border-radius: 10px;
     margin-bottom: 20px;
 }
 
-/* ===== DOCUMENTS ===== */
+/* fichiers */
 .course-content ul {
     list-style: none;
     padding-left: 0;
@@ -167,7 +176,7 @@ body {
     text-decoration: underline;
 }
 
-/* ===== FORUM ===== */
+/* forum */
 .forum-posts {
     margin-bottom: 20px;
 }
@@ -193,7 +202,7 @@ body {
     width: 100%;
 }
 
-/* ===== QUIZ ===== */
+/* quiz */
 .course-content form label {
     font-weight: 500;
     margin-bottom: 6px;
@@ -209,7 +218,7 @@ body {
     margin-top: 15px;
 }
 
-/* ===== FOOTER ===== */
+/* pied de page */
 .footer {
     text-align: center;
     padding: 20px 0;
@@ -219,7 +228,7 @@ body {
     border-top: 1px solid #ddd;
 }
 
-/* ===== RESPONSIVE ===== */
+/* mobile */
 @media (max-width: 900px) {
     .course-container {
         flex-direction: column;

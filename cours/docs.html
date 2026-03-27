@@ -6,6 +6,7 @@
     <title>Documents | Développement Web Moderne</title>
     <link rel="stylesheet" href="cours.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script defer src="../assets/js/nav-init.js"></script>
 </head>
 
 <body>
@@ -13,38 +14,42 @@
     <header class="header">
         <a href="../index.html" class="logo" style="text-decoration: none;">Edu<span>Learn</span></a>
         <nav class="nav">
-            <a href="../index.html" class="btn-acceuil">Accueil</a>
             <a href="listecours.html" class="btn-cours">Cours</a>
+            <a href="../enseignant.html" class="btn-e">Enseignants</a>
+            <a href="../profil.html" class="btn-profile">Profil</a>
+            <a href="../contact/contact.html" class="btn-contact">Contact</a>
             <a href="../auth/login.html" class="btn-login">Se connecter</a>
         </nav>
     </header>
 
     <section class="course-hero">
-        <h1>Développement Web Moderne</h1>
-        <p>Documents et supports PDF du cours.</p>
+        <h1><a id="courseTitle" href="listecours.html" style="text-decoration:none; color:inherit; cursor:pointer;">...</a></h1>
+        <p id="courseDesc">...</p>
     </section>
 
     <section class="course-container">
         <aside class="course-menu">
             <ul>
-                <li><a href="videos.html"><i class='bx bx-video'></i> Vidéos</a></li>
-                <li><a href="docs.html" class="active"><i class='bx bx-file'></i> Documents</a></li>
-                <li><a href="forum.html"><i class='bx bx-message-rounded-dots'></i> Forum</a></li>
-                <li><a href="quiz.html"><i class='bx bx-task'></i> Quiz</a></li>
+                <li><a href="#" id="menuVideos"><i class='bx bx-video'></i> Vidéos</a></li>
+                <li><a href="#" id="menuDocs" class="active"><i class='bx bx-file'></i> Documents</a></li>
+                <li><a href="#" id="menuQuiz"><i class='bx bx-task'></i> Quiz</a></li>
             </ul>
         </aside>
 
         <main class="course-content">
             <h2>Documents du cours</h2>
-            <p>Téléchargez les documents PDF :</p>
-            <ul>
-                <li><a href="assets/docs/html_intro.pdf" target="_blank"><i class='bx bx-file'></i> Introduction
-                        HTML</a></li>
-                <li><a href="assets/docs/css_intro.pdf" target="_blank"><i class='bx bx-file'></i> Introduction CSS</a>
-                </li>
-                <li><a href="assets/docs/javascript_intro.pdf" target="_blank"><i class='bx bx-file'></i> Introduction
-                        JavaScript</a></li>
-            </ul>
+            <div id="teacherControls" style="display: none; background: #f4f6f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top:0;">Ajouter un document (Enseignant)</h3>
+                <form id="addDocForm" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" name="title" placeholder="Titre du document" required style="padding: 8px; flex: 1; min-width: 200px;">
+                    <input type="text" name="url" placeholder="URL du PDF ou fichier" required style="padding: 8px; flex: 2; min-width: 200px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 8px 15px;">Ajouter</button>
+                </form>
+            </div>
+            
+            <div id="docsList">
+                <p>Chargement des documents...</p>
+            </div>
         </main>
     </section>
 
@@ -52,7 +57,117 @@
         <p>© 2026 EduLearn – Plateforme e-learning</p>
     </footer>
 
-    <script src="assets/js/main.js"></script>
-</body>
+    <script defer src="../assets/js/nav-init.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('id');
+        let isOwner = false;
 
+        document.getElementById('menuVideos').href = `videos.html?id=${courseId}`;
+        document.getElementById('menuDocs').href = `docs.html?id=${courseId}`;
+        document.getElementById('menuQuiz').href = `quiz.html?id=${courseId}`;
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const token = localStorage.getItem('token');
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+            if (body) options.body = JSON.stringify(body);
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`, options);
+                return await res.json();
+            } catch (e) {
+                console.error(e);
+                return null;
+            }
+        }
+
+        async function initPage() {
+            if (!courseId) return window.location.href = 'listecours.html';
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            
+            const res = await apiCall(`/courses/${courseId}`);
+            if (!res || !res.success) return alert("Erreur chargement cours");
+            
+            const course = res.data;
+            document.getElementById('courseTitle').textContent = course.title;
+            document.getElementById('courseDesc').textContent = course.description;
+
+            // Show add form if teacher is owner (or admin)
+            if (user) {
+                const teacherId = typeof course.teacher === 'object' ? course.teacher._id : course.teacher;
+                isOwner = (user.role === 'admin' || (user.role === 'teacher' && teacherId === user._id));
+            }
+            if (isOwner) {
+                document.getElementById('teacherControls').style.display = 'block';
+            }
+
+            renderDocs(course.documents || []);
+
+            // Add Doc Handler
+            document.getElementById('addDocForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = e.target.title.value;
+                const url = e.target.url.value;
+
+                const addRes = await apiCall(`/courses/${courseId}/documents`, 'POST', { title, url });
+                if (addRes && addRes.success) {
+                    renderDocs(addRes.data.documents || []);
+                    e.target.reset();
+                } else {
+                    alert(addRes?.message || 'Erreur lors de l\'ajout');
+                }
+            });
+        }
+
+        function renderDocs(docs) {
+            const container = document.getElementById('docsList');
+            if (docs.length === 0) {
+                container.innerHTML = '<p>Aucun document disponible pour ce cours.</p>';
+                return;
+            }
+            container.innerHTML = '<ul style="list-style: none; padding: 0;">' + docs.map(doc => {
+                let actualUrl = doc.url;
+                if(actualUrl && !actualUrl.startsWith('http://') && !actualUrl.startsWith('https://')) {
+                    actualUrl = 'http://' + actualUrl;
+                }
+                
+                // Si c'est un PDF, on l'affiche avec un iframe (comme la video)
+                let embed = '';
+                if(actualUrl.toLowerCase().endsWith('.pdf')) {
+                    embed = `<div style="margin-top: 15px;"><iframe src="${actualUrl}" width="100%" height="600px" style="border: 1px solid #ddd; border-radius: 8px;"></iframe></div>`;
+                }
+
+                const deleteBtn = isOwner ? `<button onclick="deleteDocument('${doc._id}')" style="background:none; border:none; color:red; cursor:pointer;" title="Supprimer le document"><i class='bx bx-trash'></i></button>` : '';
+
+                return `
+                <li style="margin-bottom: 15px; padding: 15px; background: #fff; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4 style="margin: 0; display:flex; align-items:center; gap: 8px;"><i class='bx bx-file'></i> ${doc.title} ${deleteBtn}</h4>
+                        <a href="${actualUrl}" target="_blank" class="btn btn-primary">Ouvrir le document</a>
+                    </div>
+                    ${embed}
+                </li>`;
+            }).join('') + '</ul>';
+        }
+
+        window.deleteDocument = async function (docId) {
+            if (!confirm("Voulez-vous vraiment supprimer ce document ?")) return;
+            const res = await apiCall(`/courses/${courseId}/documents/${docId}`, 'DELETE');
+            if (res && res.success) {
+                renderDocs(res.data.documents || []);
+            } else {
+                alert(res?.message || 'Erreur lors de la suppression');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
 </html>

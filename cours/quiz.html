@@ -1,55 +1,86 @@
 <!DOCTYPE html>
 <html lang="fr">
-
 <head>
     <meta charset="UTF-8">
-    <title>Quiz | Développement Web Moderne</title>
+    <title>Quiz | EduLearn</title>
     <link rel="stylesheet" href="cours.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <style>
+        .quiz-card { background:#fff; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.08); margin-bottom:24px; overflow:hidden; }
+        .quiz-header { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; background:#f8f9fa; border-bottom:1px solid #e9ecef; cursor:pointer; }
+        .quiz-header h3 { margin:0; font-size:1.05rem; }
+        .quiz-body { padding:20px; display:none; }
+        .quiz-body.open { display:block; }
+        .question-block { background:#f8f9fa; border-radius:8px; padding:15px; margin-bottom:15px; }
+        .question-block h4 { margin:0 0 10px; font-size:0.95rem; display:flex; justify-content:space-between; align-items:center; }
+        .choice-label { display:flex; align-items:center; gap:8px; padding:7px 10px; border-radius:6px; margin-bottom:5px; cursor:pointer; transition:background 0.15s; }
+        .choice-label:hover { background:#e2eaff; }
+        .choice-label input[type=radio] { accent-color:#3498db; }
+        .choice-label.correct { background:#d4edda; font-weight:600; }
+        .choice-label.wrong { background:#f8d7da; }
+        .result-box { padding:20px; text-align:center; border-radius:12px; margin-top:10px; }
+        .result-box.pass { background:#d4edda; color:#155724; }
+        .result-box.fail { background:#f8d7da; color:#721c24; }
+        .score-big { font-size:3rem; font-weight:700; }
+        .add-quiz-btn { background:#27ae60; color:#fff; border:none; padding:10px 18px; border-radius:8px; cursor:pointer; font-size:0.9rem; display:flex; align-items:center; gap:6px; }
+        .add-quiz-btn:hover { background:#219a52; }
+        .teacher-form { background:#f0f8ff; border:1px dashed #aac; border-radius:8px; padding:15px; margin-top:10px; display:none; }
+        .teacher-form.open { display:block; }
+        .tf-row { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+        .tf-row input, .tf-row select { padding:7px; border:1px solid #ccc; border-radius:6px; flex:1; min-width:150px; }
+        .tf-row button { padding:7px 14px; border:none; border-radius:6px; cursor:pointer; }
+        .btn-add-choice { background:#3498db; color:#fff; }
+        .btn-submit-q { background:#27ae60; color:#fff; }
+        .btn-delete { background:none; border:none; color:#e74c3c; cursor:pointer; font-size:1.1rem; }
+        .badge { display:inline-block; padding:2px 10px; border-radius:20px; font-size:0.78rem; font-weight:600; }
+        .badge-green { background:#d4edda; color:#155724; }
+        .badge-blue { background:#cce5ff; color:#004085; }
+        .badge-orange { background:#fff3cd; color:#856404; }
+        .quiz-count { font-size:0.82rem; color:#777; margin-bottom:16px; }
+    </style>
+    <script defer src="../assets/js/nav-init.js"></script>
 </head>
-
 <body>
 
     <header class="header">
         <a href="../index.html" class="logo" style="text-decoration: none;">Edu<span>Learn</span></a>
         <nav class="nav">
-            <a href="../index.html" class="btn-acceuil">Accueil</a>
             <a href="listecours.html" class="btn-cours">Cours</a>
+            <a href="../enseignant.html" class="btn-e">Enseignants</a>
+            <a href="../profil.html" class="btn-profile">Profil</a>
+            <a href="../contact/contact.html" class="btn-contact">Contact</a>
             <a href="../auth/login.html" class="btn-login">Se connecter</a>
         </nav>
     </header>
 
     <section class="course-hero">
-        <h1>Développement Web Moderne</h1>
-        <p>Quiz et devoirs pour évaluer vos connaissances.</p>
+        <h1><a id="courseTitle" href="listecours.html" style="text-decoration:none; color:inherit; cursor:pointer;">...</a></h1>
+        <p id="courseDesc">Quiz du cours</p>
     </section>
 
     <section class="course-container">
         <aside class="course-menu">
             <ul>
-                <li><a href="videos.html"><i class='bx bx-video'></i> Vidéos</a></li>
-                <li><a href="docs.html"><i class='bx bx-file'></i> Documents</a></li>
-                <li><a href="forum.html"><i class='bx bx-message-rounded-dots'></i> Forum</a></li>
-                <li><a href="quiz.html" class="active"><i class='bx bx-task'></i> Quiz</a></li>
+                <li><a href="#" id="menuVideos"><i class='bx bx-video'></i> Vidéos</a></li>
+                <li><a href="#" id="menuDocs"><i class='bx bx-file'></i> Documents</a></li>
+                <li><a href="#" id="menuQuiz" class="active"><i class='bx bx-task'></i> Quiz</a></li>
             </ul>
         </aside>
 
         <main class="course-content">
-            <h2>Quiz</h2>
-            <p>Complétez le quiz suivant :</p>
-            <form>
-                <label>1. Quel élément HTML est utilisé pour créer un lien ?</label><br>
-                <input type="radio" name="q1" value="a"> &lt;link&gt;<br>
-                <input type="radio" name="q1" value="b"> &lt;a&gt;<br>
-                <input type="radio" name="q1" value="c"> &lt;p&gt;<br><br>
+            <div id="teacherBar" style="display:none; margin-bottom:20px; display:none;">
+                <button class="add-quiz-btn" id="showAddQuizBtn"><i class='bx bx-plus'></i> Ajouter un quiz</button>
+                <div id="addQuizForm" class="teacher-form">
+                    <b>Nouveau quiz</b>
+                    <div class="tf-row" style="margin-top:8px;">
+                        <input type="text" id="newQuizName" placeholder="Nom du quiz (ex: Quiz 1 – Bases HTML)">
+                        <button class="btn-submit-q" onclick="submitAddQuiz()">Créer</button>
+                    </div>
+                </div>
+            </div>
 
-                <label>2. Quelle propriété CSS change la couleur du texte ?</label><br>
-                <input type="radio" name="q2" value="a"> color<br>
-                <input type="radio" name="q2" value="b"> background-color<br>
-                <input type="radio" name="q2" value="c"> font-size<br><br>
-
-                <button type="submit" class="btn">Soumettre</button>
-            </form>
+            <p class="quiz-count" id="quizCount"></p>
+            <div id="quizList"><p>Chargement des quiz...</p></div>
         </main>
     </section>
 
@@ -57,7 +88,297 @@
         <p>© 2026 EduLearn – Plateforme e-learning</p>
     </footer>
 
-    <script src="assets/js/main.js"></script>
-</body>
+    <script defer src="../assets/js/nav-init.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        const params  = new URLSearchParams(window.location.search);
+        const courseId = params.get('id');
+        let isOwner = false;
+        let currentUser = null;
+        let courseData = null;
 
+        document.getElementById('menuVideos').href = `videos.html?id=${courseId}`;
+        document.getElementById('menuDocs').href   = `docs.html?id=${courseId}`;
+        document.getElementById('menuQuiz').href   = `quiz.html?id=${courseId}`;
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const token = localStorage.getItem('token');
+            const opts = { method, headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` } };
+            if (body) opts.body = JSON.stringify(body);
+            try { const r = await fetch(`${API_URL}${endpoint}`, opts); return await r.json(); }
+            catch (e) { console.error(e); return null; }
+        }
+
+        async function initPage() {
+            if (!courseId) return window.location.href = 'listecours.html';
+            const userStr = localStorage.getItem('user');
+            currentUser = userStr ? JSON.parse(userStr) : null;
+
+            const res = await apiCall(`/courses/${courseId}`);
+            if (!res || !res.success) return alert('Erreur chargement cours');
+
+            courseData = res.data;
+            document.getElementById('courseTitle').textContent = courseData.title;
+
+            if (currentUser) {
+                const teacherId = typeof courseData.teacher === 'object' ? courseData.teacher._id : courseData.teacher;
+                isOwner = (currentUser.role === 'admin' || (currentUser.role === 'teacher' && teacherId === currentUser._id));
+            }
+
+            if (isOwner) {
+                document.getElementById('teacherBar').style.display = 'flex';
+                document.getElementById('showAddQuizBtn').addEventListener('click', () => {
+                    document.getElementById('addQuizForm').classList.toggle('open');
+                });
+            }
+
+            renderAllQuizzes(courseData.quizzes || []);
+        }
+
+        // affichage
+
+        function renderAllQuizzes(quizzes) {
+            const count = quizzes.length;
+            const max = 10;
+            document.getElementById('quizCount').textContent =
+                count === 0 ? 'Aucun quiz pour ce cours.' : `${count} / ${max} quiz`;
+
+            if (count === 0) {
+                document.getElementById('quizList').innerHTML = `
+                    <div style="text-align:center; color:#888; padding:40px;">
+                        <i class='bx bx-task' style="font-size:3rem;"></i>
+                        <p>Aucun quiz disponible pour l'instant.</p>
+                    </div>`;
+                return;
+            }
+
+            document.getElementById('quizList').innerHTML = quizzes.map((quiz, idx) =>
+                renderQuizCard(quiz, idx)
+            ).join('');
+        }
+
+        function renderQuizCard(quiz, idx) {
+            const qCount = quiz.questions ? quiz.questions.length : 0;
+            const teacherActions = isOwner ? `
+                <button class="btn-delete" onclick="event.stopPropagation(); deleteQuiz('${quiz._id}')" title="Supprimer le quiz"><i class='bx bx-trash'></i></button>
+            ` : '';
+
+            return `
+            <div class="quiz-card" id="quizCard_${quiz._id}">
+                <div class="quiz-header" onclick="toggleQuiz('${quiz._id}')">
+                    <h3><i class='bx bx-task'></i> ${quiz.name} <span class="badge badge-blue" style="margin-left:8px;">${qCount} question${qCount !== 1 ? 's' : ''}</span></h3>
+                    <div style="display:flex; gap:8px; align-items:center;">
+                        ${teacherActions}
+                        <i class='bx bx-chevron-down' id="chevron_${quiz._id}"></i>
+                    </div>
+                </div>
+                <div class="quiz-body" id="quizBody_${quiz._id}">
+                    ${isOwner ? renderTeacherQuizBody(quiz) : renderStudentQuizBody(quiz)}
+                </div>
+            </div>`;
+        }
+
+        // vue enseignant
+        function renderTeacherQuizBody(quiz) {
+            const questions = quiz.questions || [];
+            const qHtml = questions.length === 0
+                ? `<p style="color:#888;">Aucune question. Ajoutez-en une ci-dessous.</p>`
+                : questions.map((q, i) => `
+                    <div class="question-block">
+                        <h4>
+                            <span>Q${i+1}. ${q.question}</span>
+                            <button class="btn-delete" onclick="deleteQuestion('${quiz._id}','${q._id}')" title="Supprimer"><i class='bx bx-trash'></i></button>
+                        </h4>
+                        <ul style="list-style:none; padding:0; margin:0;">
+                            ${q.choices.map((c, ci) => `
+                                <li class="choice-label ${ci === q.correctAnswer ? 'correct' : ''}">
+                                    ${ci === q.correctAnswer ? '✅' : '○'} ${c}
+                                </li>`).join('')}
+                        </ul>
+                    </div>`).join('');
+
+            return `
+                <div>${qHtml}</div>
+                <hr style="margin:15px 0;">
+                <b style="color:#27ae60;"><i class='bx bx-plus-circle'></i> Ajouter une question</b>
+                <div id="qForm_${quiz._id}" style="margin-top:10px;">
+                    <div class="tf-row">
+                        <input type="text" id="qText_${quiz._id}" placeholder="Énoncé de la question" style="flex:3;">
+                    </div>
+                    <div id="choices_${quiz._id}">
+                        <div class="tf-row">
+                            <input type="text" placeholder="Choix A" class="choice-input" data-quiz="${quiz._id}">
+                            <input type="text" placeholder="Choix B" class="choice-input" data-quiz="${quiz._id}">
+                        </div>
+                    </div>
+                    <div class="tf-row" style="margin-top:5px;">
+                        <button class="btn-add-choice" onclick="addChoiceField('${quiz._id}')"><i class='bx bx-plus'></i> Ajouter un choix</button>
+                    </div>
+                    <div class="tf-row" style="margin-top:8px;">
+                        <label style="align-self:center; font-weight:600;">Bonne réponse (0 = A, 1 = B, …) :</label>
+                        <input type="number" id="correct_${quiz._id}" min="0" placeholder="Index (0, 1, 2...)" style="max-width:120px;">
+                        <button class="btn-submit-q" onclick="submitAddQuestion('${quiz._id}')"><i class='bx bx-check'></i> Valider la question</button>
+                    </div>
+                </div>`;
+        }
+
+        // vue étudiant
+        function renderStudentQuizBody(quiz) {
+            const questions = quiz.questions || [];
+            if (questions.length === 0) {
+                return `<p style="color:#888; text-align:center;">Ce quiz n'a pas encore de questions.</p>`;
+            }
+
+            // Check if already submitted (locally stored results)
+            const resultKey = `quiz_result_${courseId}_${quiz._id}`;
+            const stored = localStorage.getItem(resultKey);
+            if (stored) {
+                return renderStoredResult(JSON.parse(stored), quiz);
+            }
+
+            const qHtml = questions.map((q, i) => `
+                <div class="question-block">
+                    <h4>Q${i+1}. ${q.question}</h4>
+                    ${q.choices.map((c, ci) => `
+                        <label class="choice-label">
+                            <input type="radio" name="q_${quiz._id}_${i}" value="${ci}"> ${c}
+                        </label>`).join('')}
+                </div>`).join('');
+
+            return `
+                <div class="quiz-card" style="box-shadow:none; margin:0;">
+                    <div style="background:#fff3cd; border-radius:8px; padding:10px 15px; margin-bottom:15px; color:#856404; font-size:0.88rem;">
+                        <i class='bx bx-info-circle'></i> <b>Attention :</b> Vous ne pouvez soumettre ce quiz <b>qu'une seule fois</b>. Une fois soumis, vous ne pourrez plus le modifier.
+                    </div>
+                    ${qHtml}
+                    <div style="text-align:center; margin-top:15px;">
+                        <button onclick="submitStudentQuiz('${quiz._id}')" style="background:#3498db; color:#fff; border:none; padding:12px 30px; border-radius:8px; font-size:1rem; cursor:pointer;">
+                            <i class='bx bx-send'></i> Soumettre le quiz
+                        </button>
+                    </div>
+                </div>`;
+        }
+
+        function renderStoredResult(result, quiz) {
+            const scoreClass = result.score >= 5 ? 'pass' : 'fail';
+            const detailHtml = result.details ? result.details.map((d, i) => `
+                <div class="question-block">
+                    <h4>Q${i+1}. ${d.question}</h4>
+                    ${d.choices.map((c, ci) => `
+                        <div class="choice-label ${ci === d.correctAnswer ? 'correct' : (ci === d.chosen && !d.isCorrect ? 'wrong' : '')}">
+                            ${ci === d.correctAnswer ? '✅' : (ci === d.chosen ? '❌' : '○')} ${c}
+                        </div>`).join('')}
+                </div>`).join('') : '';
+
+            return `
+                <div class="result-box ${scoreClass}">
+                    <div class="score-big">${result.score} / 10</div>
+                    <p>${result.correctCount} bonne${result.correctCount !== 1 ? 's' : ''} réponse${result.correctCount !== 1 ? 's' : ''} sur ${result.total} question${result.total !== 1 ? 's' : ''}</p>
+                    <p>${result.score >= 5 ? '🎉 Félicitations !' : '📚 Continuez à réviser!'}</p>
+                </div>
+                <div style="margin-top:20px;"><b>Détail des réponses :</b></div>
+                ${detailHtml}`;
+        }
+
+        // interactions
+        window.toggleQuiz = function(quizId) {
+            const body = document.getElementById(`quizBody_${quizId}`);
+            const chev = document.getElementById(`chevron_${quizId}`);
+            body.classList.toggle('open');
+            chev.className = body.classList.contains('open') ? "bx bx-chevron-up" : "bx bx-chevron-down";
+        };
+
+        // actions enseignant
+        window.addChoiceField = function(quizId) {
+            const container = document.getElementById(`choices_${quizId}`);
+            const count = container.querySelectorAll('.choice-input').length;
+            const letters = ['A','B','C','D','E','F'];
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.placeholder = `Choix ${letters[count] || count}`;
+            input.className = 'choice-input';
+            input.dataset.quiz = quizId;
+            input.style.cssText = 'padding:7px; border:1px solid #ccc; border-radius:6px; flex:1; margin:4px 0;';
+            container.appendChild(input);
+        };
+
+        window.submitAddQuestion = async function(quizId) {
+            const question = document.getElementById(`qText_${quizId}`).value.trim();
+            const choiceEls = document.querySelectorAll(`.choice-input[data-quiz="${quizId}"]`);
+            const choices = Array.from(choiceEls).map(e => e.value.trim()).filter(Boolean);
+            const correctAnswer = parseInt(document.getElementById(`correct_${quizId}`).value);
+
+            if (!question || choices.length < 2 || isNaN(correctAnswer) || correctAnswer >= choices.length) {
+                return alert('Vérifiez le texte, les choix, et l\'index de la bonne réponse.');
+            }
+
+            const res = await apiCall(`/courses/${courseId}/quizzes/${quizId}/questions`, 'POST', { question, choices, correctAnswer });
+            if (res && res.success) {
+                courseData = res.data;
+                renderAllQuizzes(courseData.quizzes || []);
+                // Reopen the quiz that was being edited
+                setTimeout(() => { const b = document.getElementById(`quizBody_${quizId}`); if(b) { b.classList.add('open'); }}, 50);
+            } else {
+                alert(res?.message || 'Erreur');
+            }
+        };
+
+        window.deleteQuestion = async function(quizId, questionId) {
+            if (!confirm('Supprimer cette question ?')) return;
+            const res = await apiCall(`/courses/${courseId}/quizzes/${quizId}/questions/${questionId}`, 'DELETE');
+            if (res && res.success) {
+                courseData = res.data;
+                renderAllQuizzes(courseData.quizzes || []);
+                setTimeout(() => { const b = document.getElementById(`quizBody_${quizId}`); if(b) b.classList.add('open'); }, 50);
+            } else alert(res?.message || 'Erreur');
+        };
+
+        window.deleteQuiz = async function(quizId) {
+            if (!confirm('Supprimer ce quiz et toutes ses questions ?')) return;
+            const res = await apiCall(`/courses/${courseId}/quizzes/${quizId}`, 'DELETE');
+            if (res && res.success) { courseData = res.data; renderAllQuizzes(courseData.quizzes || []); }
+            else alert(res?.message || 'Erreur');
+        };
+
+        window.submitAddQuiz = async function() {
+            const name = document.getElementById('newQuizName').value.trim();
+            if (!name) return alert('Entrez un nom pour le quiz.');
+            const res = await apiCall(`/courses/${courseId}/quizzes`, 'POST', { name });
+            if (res && res.success) {
+                courseData = res.data;
+                document.getElementById('newQuizName').value = '';
+                document.getElementById('addQuizForm').classList.remove('open');
+                renderAllQuizzes(courseData.quizzes || []);
+            } else alert(res?.message || 'Erreur');
+        };
+
+        // soumission étudiant
+        window.submitStudentQuiz = async function(quizId) {
+            const quiz = courseData.quizzes.find(q => q._id === quizId);
+            if (!quiz) return;
+
+            const answers = quiz.questions.map((q, i) => {
+                const sel = document.querySelector(`input[name="q_${quizId}_${i}"]:checked`);
+                return sel ? parseInt(sel.value) : -1;
+            });
+
+            if (answers.includes(-1)) {
+                return alert('Veuillez répondre à toutes les questions avant de soumettre.');
+            }
+
+            const res = await apiCall(`/courses/${courseId}/quizzes/${quizId}/submit`, 'POST', { answers });
+            if (res && res.success) {
+                const result = { score: res.score, correctCount: res.correctCount, total: res.total, details: res.details };
+                localStorage.setItem(`quiz_result_${courseId}_${quizId}`, JSON.stringify(result));
+
+                const body = document.getElementById(`quizBody_${quizId}`);
+                body.innerHTML = renderStoredResult(result, quiz);
+            } else {
+                alert(res?.message || 'Erreur lors de la soumission');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
 </html>

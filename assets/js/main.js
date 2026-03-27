@@ -7,7 +7,7 @@ document.addEventListener("scroll", () => {
         }
     });
 });
-// ==== Forum JS ====
+// forum js
 
 // Sélection des éléments
 const forumForm = document.querySelector('.forum form');
@@ -44,7 +44,7 @@ menuLinks.forEach(link => {
     });
 });
 
-// ===== Onglet actif dans le menu =====
+// onglet actif dans le menu
 document.addEventListener("DOMContentLoaded", () => {
     const menuLinks = document.querySelectorAll(".course-menu ul li a");
 

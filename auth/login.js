@@ -81,7 +81,7 @@ if (loginForm) {
                 } else if (data.user.role === 'teacher') {
                     window.location.href = '../enseignant.html';
                 } else {
-                    window.location.href = '../dashboard.html';
+                    window.location.href = '../cours/listecours.html';
                 }
             } else {
                 alert('Erreur de connexion: ' + (data.message || 'Identifiants invalides'));

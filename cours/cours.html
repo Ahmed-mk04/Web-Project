@@ -24,9 +24,9 @@
         <p></p>
     </section>
 
-    <!-- ===== CONTENU DU COURS ===== -->
+    <!-- contenu -->
     <section id="course-content-section" class="course-container" style="display: none;">
-        <!-- ===== MENU LATÉRAL ===== -->
+        <!-- menu latéral -->
         <aside class="course-menu">
             <ul>
                 <li><a href="#" class="active" onclick="loadContent('videos')"><i class='bx bx-video'></i> Vidéos</a>
@@ -37,7 +37,7 @@
             </ul>
         </aside>
 
-        <!-- ===== CONTENU PRINCIPAL ===== -->
+        <!-- contenu -->
         <main class="course-main-content">
             <div id="dynamic-content">
                 <h3>Bienvenue dans le cours !</h3>
@@ -116,7 +116,8 @@
         }
 
         function showContent() {
-            document.getElementById('course-content-section').style.display = 'flex';
+            // Redirige automatiquement vers la page Vidéos une fois autorisé
+            window.location.href = `videos.html?id=${courseId}`;
         }
 
         // Gestion du contenu dynamique (placeholder pour l'instant)

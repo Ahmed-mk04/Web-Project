@@ -8,6 +8,7 @@
     <!-- CSS -->
     <link rel="stylesheet" href="assets/css/style.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script defer src="assets/js/nav-init.js"></script>
 
     <style>
         /* CSS Integré pour éviter les problèmes de chargement */
@@ -194,11 +195,19 @@
 
     <!-- Header -->
     <header class="header">
-        <a href="index.html" class="logo">Edu<span>Learn</span></a>
+        <a href="index.html" class="logo" style="text-decoration: none;">Edu<span>Learn</span></a>
+
+        <form class="search-bar" action="recherche.html" method="GET">
+            <input type="text" name="q" placeholder="Rechercher un cours..." required>
+            <button type="submit"><i class='bx bx-search'></i></button>
+        </form>
+
         <nav class="nav">
-            <a href="index.html">Accueil</a>
-            <a href="#" id="dashboardLink">Tableau de Bord</a>
-            <a href="#" onclick="logout()">Se déconnecter</a>
+            <a href="cours/listecours.html" class="btn-cours">Cours</a>
+            <a href="enseignant.html" class="btn-e">Enseignants</a>
+            <a href="profil.html" class="btn-profile">Profil</a>
+            <a href="contact/contact.html" class="btn-contact">Contact</a>
+            <a href="auth/login.html" class="btn-login" style="margin-left:auto;">Se connecter</a>
         </nav>
     </header>
 
@@ -208,6 +217,7 @@
     </div>
 
     <!-- Script -->
+    <script defer src="assets/js/nav-init.js"></script>
     <script>
         const API_URL = 'http://localhost:3000/api';
 
@@ -259,13 +269,7 @@
         }
 
         function renderProfile(user) {
-            // Update Dashboard Link
-            const link = document.getElementById('dashboardLink');
-            if (user.role === 'admin') link.href = 'dashboard-admin.html';
-            else if (user.role === 'teacher') link.href = 'enseignant.html';
-            else link.href = 'dashboard.html';
-
-            // Role Label
+            // Dashboard Link logic is now handled globally by nav-init.js            // Role Label
             const roles = { 'student': 'Étudiant', 'teacher': 'Enseignant', 'admin': 'Administrateur' };
             const roleName = roles[user.role] || user.role;
             const initials = user.firstName.charAt(0).toUpperCase();

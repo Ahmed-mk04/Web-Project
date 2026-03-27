@@ -44,9 +44,25 @@ const courseSchema = new mongoose.Schema({
     documents: [{
         title: String,
         url: String,
-        type: String, // pdf, doc, ppt, etc.
+        fileType: String,
         size: String,
         order: Number
+    }],
+
+    // Quizzes
+    quizzes: [{
+        name: { type: String, required: true },
+        questions: [{
+            question: String,
+            choices: [String],
+            correctAnswer: Number   // index of the correct choice in choices[]
+        }],
+        submissions: [{
+            student: { type: mongoose.Schema.Types.ObjectId, ref: 'Student' },
+            answers: [Number],      // student's chosen choice index per question
+            score: Number,
+            submittedAt: { type: Date, default: Date.now }
+        }]
     }],
 
     // Métadonnées

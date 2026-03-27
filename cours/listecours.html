@@ -6,12 +6,13 @@
     <title>Liste des cours | EduLearn</title>
     <link rel="stylesheet" href="../assets/css/style.css">
     <script defer src="../assets/js/main.js"></script>
+    <script defer src="../assets/js/nav-init.js"></script>
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
 </head>
 
 <body>
 
-    <!-- ===== HEADER ===== -->
+    <!-- en-tête -->
     <header class="header">
         <a href="../index.html" class="logo" style="text-decoration: none;">Edu<span>Learn</span></a>
 
@@ -22,14 +23,14 @@
 
         <nav class="nav">
             <a href="../index.html" class="btn-acceuil">Accueil</a>
-            <a href="../enseignant.html" class="btn-cours">enseignant</a>
+            <a href="../enseignant.html" class="btn-e">Enseignants</a>
             <a href="../profil.html" class="btn-profile">Profil</a>
             <a href="../contact/contact.html" class="btn-contact">Contact</a>
             <a href="../auth/login.html" class="btn-login">Se connecter</a>
         </nav>
     </header>
 
-    <!-- ===== HERO ===== -->
+    <!-- intro -->
     <section class="page-hero">
         <div class="page-hero-text">
             <h1>Nos Cours Disponibles</h1>
@@ -41,29 +42,19 @@
     </section>
 
 
-    <!-- ===== FILTRE PAR SPECIALITE ===== -->
+    <!-- filtre -->
     <section class="filter-bar">
-        <form>
-            <select name="specialite">
-                <option value="">Toutes les spécialités</option>
-                <option value="web">Développement Web</option>
-                <option value="java">Java / POO</option>
-                <option value="bd">Bases de données</option>
+        <form id="filterForm">
+            <select id="teacherFilter" name="teacher">
+                <option value="">Tous les enseignants</option>
+                <!-- Options chargées dynamiquement depuis la BD -->
             </select>
-
-            <select name="annee">
-                <option value="">Toutes les années</option>
-                <option value="l1">L1</option>
-                <option value="l2">L2</option>
-                <option value="l3">L3</option>
-            </select>
-
             <button type="submit">Filtrer</button>
-            <!-- TODO Node.js : filtrage dynamique -->
+            <button type="button" id="resetFilter" style="background:#e0e0e0; color:#333;">Réinitialiser</button>
         </form>
     </section>
 
-    <!-- ===== LISTE DES COURS ===== -->
+    <!-- cours -->
     <section class="courses-grid">
         <div id="loading-message" style="width: 100%; text-align: center; padding: 20px;">
             <p>Chargement des cours...</p>
@@ -71,7 +62,7 @@
         <!-- Les cours seront chargés dynamiquement ici -->
     </section>
 
-    <!-- ===== FOOTER ===== -->
+    <!-- pied de page -->
     <footer class="footer">
         <p>© 2026 EduLearn – Plateforme e-learning</p>
     </footer>
@@ -140,22 +131,35 @@
         }
 
         function setupFilters(allCourses) {
-            const form = document.querySelector('.filter-bar form');
+            // Build unique teacher list from loaded courses
+            const teacherMap = {};
+            allCourses.forEach(course => {
+                if (course.teacher && typeof course.teacher === 'object') {
+                    teacherMap[course.teacher._id] = `${course.teacher.firstName} ${course.teacher.lastName}`;
+                }
+            });
 
-            form.addEventListener('submit', (e) => {
+            const select = document.getElementById('teacherFilter');
+            select.innerHTML = '<option value="">Tous les enseignants</option>';
+            Object.entries(teacherMap).forEach(([id, name]) => {
+                const opt = document.createElement('option');
+                opt.value = id;
+                opt.textContent = name;
+                select.appendChild(opt);
+            });
+
+            document.getElementById('filterForm').addEventListener('submit', (e) => {
                 e.preventDefault();
-                const specialite = form.specialite.value.toLowerCase();
-                const niveau = form.annee.value.toLowerCase(); // Mapping avec 'level' ou 'targetAudience'
-
-                const filtered = allCourses.filter(course => {
-                    const matchSpec = !specialite || (course.category && course.category.toLowerCase().includes(specialite)) || (course.title.toLowerCase().includes(specialite));
-                    // Adaptation simple pour le filtre 'annee' (mapping approximatif pour l'exemple)
-                    const matchNiveau = !niveau || (course.level && course.level.toLowerCase().includes(niveau));
-
-                    return matchSpec && matchNiveau;
-                });
-
+                const teacherId = select.value;
+                const filtered = teacherId
+                    ? allCourses.filter(c => c.teacher && c.teacher._id === teacherId)
+                    : allCourses;
                 displayCourses(filtered);
+            });
+
+            document.getElementById('resetFilter').addEventListener('click', () => {
+                select.value = '';
+                displayCourses(allCourses);
             });
         }
 

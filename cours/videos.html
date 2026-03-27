@@ -6,6 +6,7 @@
     <title>Vidéos | Développement Web Moderne</title>
     <link rel="stylesheet" href="cours.css">
     <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script defer src="../assets/js/nav-init.js"></script>
 </head>
 
 <body>
@@ -13,40 +14,42 @@
     <header class="header">
         <a href="../index.html" class="logo" style="text-decoration: none;">Edu<span>Learn</span></a>
         <nav class="nav">
-            <a href="../index.html" class="btn-acceuil">Accueil</a>
             <a href="listecours.html" class="btn-cours">Cours</a>
+            <a href="../enseignant.html" class="btn-e">Enseignants</a>
+            <a href="../profil.html" class="btn-profile">Profil</a>
+            <a href="../contact/contact.html" class="btn-contact">Contact</a>
             <a href="../auth/login.html" class="btn-login">Se connecter</a>
         </nav>
     </header>
 
     <section class="course-hero">
-        <h1>Développement Web Moderne</h1>
-        <p>Vidéos d’apprentissage pour HTML, CSS, JavaScript et PHP.</p>
+        <h1><a id="courseTitle" href="listecours.html" style="text-decoration:none; color:inherit; cursor:pointer;">...</a></h1>
+        <p id="courseDesc">...</p>
     </section>
 
     <section class="course-container">
         <aside class="course-menu">
             <ul>
-                <li><a href="videos.html" class="active"><i class='bx bx-video'></i> Vidéos</a></li>
-                <li><a href="docs.html"><i class='bx bx-file'></i> Documents</a></li>
-                <li><a href="forum.html"><i class='bx bx-message-rounded-dots'></i> Forum</a></li>
-                <li><a href="quiz.html"><i class='bx bx-task'></i> Quiz</a></li>
+                <li><a href="#" id="menuVideos" class="active"><i class='bx bx-video'></i> Vidéos</a></li>
+                <li><a href="#" id="menuDocs"><i class='bx bx-file'></i> Documents</a></li>
+                <li><a href="#" id="menuQuiz"><i class='bx bx-task'></i> Quiz</a></li>
             </ul>
         </aside>
 
         <main class="course-content">
             <h2>Vidéos du cours</h2>
-            <p>Regardez les vidéos ici :</p>
-            <!-- Exemple vidéo -->
-            <video width="100%" controls>
-                <source src="assets/videos/html_intro.mp4" type="video/mp4">
-                Votre navigateur ne supporte pas les vidéos HTML5.
-            </video>
-            <br><br>
-            <video width="100%" controls>
-                <source src="assets/videos/css_intro.mp4" type="video/mp4">
-                Votre navigateur ne supporte pas les vidéos HTML5.
-            </video>
+            <div id="teacherControls" style="display: none; background: #f4f6f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <h3 style="margin-top:0;">Ajouter une vidéo (Enseignant)</h3>
+                <form id="addVideoForm" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <input type="text" name="title" placeholder="Titre de la vidéo" required style="padding: 8px; flex: 1; min-width: 200px;">
+                    <input type="text" name="url" placeholder="URL (.mp4 ou YouTube)" required style="padding: 8px; flex: 2; min-width: 200px;">
+                    <button type="submit" class="btn btn-primary" style="padding: 8px 15px;">Ajouter</button>
+                </form>
+            </div>
+            
+            <div id="videosList">
+                <p>Chargement des vidéos...</p>
+            </div>
         </main>
     </section>
 
@@ -54,7 +57,127 @@
         <p>© 2026 EduLearn – Plateforme e-learning</p>
     </footer>
 
-    <script src="assets/js/main.js"></script>
-</body>
+    <script defer src="../assets/js/nav-init.js"></script>
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        const urlParams = new URLSearchParams(window.location.search);
+        const courseId = urlParams.get('id');
+        let isOwner = false;
 
+        document.getElementById('menuVideos').href = `videos.html?id=${courseId}`;
+        document.getElementById('menuDocs').href = `docs.html?id=${courseId}`;
+        document.getElementById('menuQuiz').href = `quiz.html?id=${courseId}`;
+
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const token = localStorage.getItem('token');
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                }
+            };
+            if (body) options.body = JSON.stringify(body);
+            try {
+                const res = await fetch(`${API_URL}${endpoint}`, options);
+                return await res.json();
+            } catch (e) {
+                console.error(e);
+                return null;
+            }
+        }
+
+        async function initPage() {
+            if (!courseId) return window.location.href = 'listecours.html';
+            const userStr = localStorage.getItem('user');
+            const user = userStr ? JSON.parse(userStr) : null;
+            
+            const res = await apiCall(`/courses/${courseId}`);
+            if (!res || !res.success) return alert("Erreur chargement cours");
+            
+            const course = res.data;
+            document.getElementById('courseTitle').textContent = course.title;
+            document.getElementById('courseDesc').textContent = course.description;
+
+            // Show add form if teacher is owner (or admin)
+            if (user) {
+                const teacherId = typeof course.teacher === 'object' ? course.teacher._id : course.teacher;
+                isOwner = (user.role === 'admin' || (user.role === 'teacher' && teacherId === user._id));
+            }
+            if (isOwner) {
+                document.getElementById('teacherControls').style.display = 'block';
+            }
+
+            renderVideos(course.videos || []);
+
+            // Add Video Handler
+            document.getElementById('addVideoForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const title = e.target.title.value;
+                const url = e.target.url.value;
+
+                const addRes = await apiCall(`/courses/${courseId}/videos`, 'POST', { title, url });
+                if (addRes && addRes.success) {
+                    renderVideos(addRes.data.videos || []);
+                    e.target.reset();
+                } else {
+                    alert(addRes?.message || 'Erreur lors de l\'ajout');
+                }
+            });
+        }
+
+        function renderVideos(videos) {
+            const container = document.getElementById('videosList');
+            if (videos.length === 0) {
+                container.innerHTML = '<p>Aucune vidéo disponible pour ce cours.</p>';
+                return;
+            }
+            container.innerHTML = videos.map(vid => {
+                // If it's a direct mp4
+                let actualUrl = vid.url;
+                if(actualUrl && !actualUrl.startsWith('http://') && !actualUrl.startsWith('https://')) {
+                    actualUrl = 'http://' + actualUrl;
+                }
+
+                const deleteBtn = isOwner ? `<button onclick="deleteVideo('${vid._id}')" style="background:none; border:none; color:red; cursor:pointer;" title="Supprimer la vidéo"><i class='bx bx-trash'></i></button>` : '';
+
+                if (actualUrl.endsWith('.mp4')) {
+                    return `
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="display:flex; justify-content:space-between; align-items:center;">
+                            <span>${vid.title}</span>
+                            ${deleteBtn}
+                        </h4>
+                        <video width="100%" controls>
+                            <source src="${actualUrl}" type="video/mp4">
+                            Votre navigateur ne supporte pas les vidéos
+                        </video>
+                    </div>`;
+                } else {
+                    // Just a link or youtube
+                    return `
+                    <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #ddd; border-radius: 8px;">
+                        <h4 style="display:flex; justify-content:space-between; align-items:center; margin:0;">
+                            <span><i class='bx bx-video'></i> ${vid.title}</span>
+                            ${deleteBtn}
+                        </h4>
+                        <a href="${actualUrl}" target="_blank" class="btn btn-primary" style="display:inline-block; margin-top:10px;">Voir la vidéo en cours</a>
+                    </div>`;
+                }
+            }).join('');
+        }
+
+        window.deleteVideo = async function (videoId) {
+            if (!confirm("Voulez-vous vraiment supprimer cette vidéo ?")) return;
+            const res = await apiCall(`/courses/${courseId}/videos/${videoId}`, 'DELETE');
+            if (res && res.success) {
+                renderVideos(res.data.videos || []);
+            } else {
+                alert(res?.message || 'Erreur lors de la suppression');
+            }
+        };
+
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
+</body>
 </html>

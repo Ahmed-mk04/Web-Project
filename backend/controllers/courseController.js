@@ -131,6 +131,14 @@ exports.createCourse = async (req, res, next) => {
             teacher: teacherId,
             isPublic: isPublic
         };
+        
+        // Fix validation error: enrollmentKey is required and unique in the database schema.
+        // For public courses, the user leaves it empty, triggering a validation constraint error.
+        // We auto-generate a unique hidden key for public courses.
+        if (isPublic && (!courseData.enrollmentKey || courseData.enrollmentKey.trim() === '')) {
+            courseData.enrollmentKey = `PUB-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+        }
+
         console.log(`Creating course: ${courseData.title}, isPublic: ${isPublic}`);
 
         const course = await Course.create(courseData);
@@ -335,6 +343,208 @@ exports.addDocument = async (req, res, next) => {
             message: 'Document ajouté',
             data: course
         });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Supprimer une vidéo
+// @route   DELETE /api/courses/:id/videos/:videoId
+// @access  Private/Teacher/Admin
+exports.deleteVideo = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+        }
+
+        course.videos = course.videos.filter(v => v._id.toString() !== req.params.videoId);
+        await course.save();
+
+        res.status(200).json({ success: true, message: 'Vidéo supprimée', data: course });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Supprimer un document
+// @route   DELETE /api/courses/:id/documents/:docId
+// @access  Private/Teacher/Admin
+exports.deleteDocument = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) {
+            return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+        }
+
+        course.documents = course.documents.filter(d => d._id.toString() !== req.params.docId);
+        await course.save();
+
+        res.status(200).json({ success: true, message: 'Document supprimé', data: course });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// =================== QUIZ ===================
+
+// @desc    Ajouter un quiz (max 10)
+// @route   POST /api/courses/:id/quizzes
+// @access  Private/Teacher/Admin
+exports.addQuiz = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+
+        if (course.quizzes.length >= 10) {
+            return res.status(400).json({ success: false, message: 'Maximum 10 quiz atteint' });
+        }
+
+        const { name } = req.body;
+        if (!name || name.trim() === '') {
+            return res.status(400).json({ success: false, message: 'Le nom du quiz est requis' });
+        }
+
+        course.quizzes.push({ name: name.trim(), questions: [], submissions: [] });
+        await course.save();
+
+        res.status(201).json({ success: true, message: 'Quiz créé', data: course });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Ajouter une question à un quiz
+// @route   POST /api/courses/:id/quizzes/:quizId/questions
+// @access  Private/Teacher/Admin
+exports.addQuestion = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+
+        const quiz = course.quizzes.id(req.params.quizId);
+        if (!quiz) return res.status(404).json({ success: false, message: 'Quiz non trouvé' });
+
+        const { question, choices, correctAnswer } = req.body;
+        if (!question || !choices || choices.length < 2 || correctAnswer === undefined) {
+            return res.status(400).json({ success: false, message: 'Données de question invalides' });
+        }
+
+        quiz.questions.push({ question, choices, correctAnswer: Number(correctAnswer) });
+        await course.save();
+
+        res.status(201).json({ success: true, message: 'Question ajoutée', data: course });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Supprimer une question d'un quiz
+// @route   DELETE /api/courses/:id/quizzes/:quizId/questions/:questionId
+// @access  Private/Teacher/Admin
+exports.deleteQuestion = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+
+        const quiz = course.quizzes.id(req.params.quizId);
+        if (!quiz) return res.status(404).json({ success: false, message: 'Quiz non trouvé' });
+
+        quiz.questions = quiz.questions.filter(q => q._id.toString() !== req.params.questionId);
+        await course.save();
+
+        res.status(200).json({ success: true, message: 'Question supprimée', data: course });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Supprimer un quiz
+// @route   DELETE /api/courses/:id/quizzes/:quizId
+// @access  Private/Teacher/Admin
+exports.deleteQuiz = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+
+        course.quizzes = course.quizzes.filter(q => q._id.toString() !== req.params.quizId);
+        await course.save();
+
+        res.status(200).json({ success: true, message: 'Quiz supprimé', data: course });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Soumettre un quiz (student, une seule fois)
+// @route   POST /api/courses/:id/quizzes/:quizId/submit
+// @access  Private/Student/Teacher/Admin
+exports.submitQuiz = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+
+        const quiz = course.quizzes.id(req.params.quizId);
+        if (!quiz) return res.status(404).json({ success: false, message: 'Quiz non trouvé' });
+
+        const userId = req.user._id.toString();
+
+        // Check if already submitted (students only)
+        if (req.user.role === 'student') {
+            const alreadySubmitted = quiz.submissions.some(s => s.student.toString() === userId);
+            if (alreadySubmitted) {
+                return res.status(400).json({ success: false, message: 'Vous avez déjà soumis ce quiz' });
+            }
+        }
+
+        const { answers } = req.body; // array of selected choice indices
+        const total = quiz.questions.length;
+        if (!total) return res.status(400).json({ success: false, message: 'Ce quiz n\'a pas encore de questions' });
+
+        // Calculate score out of 10
+        let correctCount = 0;
+        const details = quiz.questions.map((q, i) => {
+            const chosen = answers[i] !== undefined ? Number(answers[i]) : -1;
+            const isCorrect = chosen === q.correctAnswer;
+            if (isCorrect) correctCount++;
+            return { question: q.question, chosen, correctAnswer: q.correctAnswer, choices: q.choices, isCorrect };
+        });
+
+        const score = Math.round((correctCount / total) * 10 * 10) / 10; // score / 10
+
+        // Save submission for students
+        if (req.user.role === 'student') {
+            quiz.submissions.push({ student: req.user._id, answers, score });
+            await course.save();
+        }
+
+        res.status(200).json({
+            success: true,
+            score,
+            correctCount,
+            total,
+            details
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// @desc    Vérifier si un étudiant a déjà soumis un quiz
+// @route   GET /api/courses/:id/quizzes/:quizId/submission
+// @access  Private
+exports.getSubmission = async (req, res, next) => {
+    try {
+        const course = await Course.findById(req.params.id);
+        if (!course) return res.status(404).json({ success: false, message: 'Cours non trouvé' });
+
+        const quiz = course.quizzes.id(req.params.quizId);
+        if (!quiz) return res.status(404).json({ success: false, message: 'Quiz non trouvé' });
+
+        const userId = req.user._id.toString();
+        const submission = quiz.submissions.find(s => s.student.toString() === userId);
+
+        res.status(200).json({ success: true, submission: submission || null });
     } catch (error) {
         next(error);
     }

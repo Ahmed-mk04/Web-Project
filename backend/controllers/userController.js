@@ -119,11 +119,6 @@ exports.createUser = async (req, res, next) => {
 // @access  Private/Admin
 exports.updateUser = async (req, res, next) => {
     try {
-        // Ne pas permettre la modification du mot de passe via cette route
-        if (req.body.password) {
-            delete req.body.password;
-        }
-
         const found = await findUserById(req.params.id);
 
         if (!found) {
@@ -133,15 +128,19 @@ exports.updateUser = async (req, res, next) => {
             });
         }
 
-        const { model } = found;
-        const user = await model.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            {
-                new: true,
-                runValidators: true
-            }
-        ).select('-password');
+        const { user } = found;
+
+        // Apply all updates from req.body to the user document
+        Object.keys(req.body).forEach(key => {
+            user[key] = req.body[key];
+        });
+
+        // Use save() so that the 'pre-save' middleware (password hashing) runs!
+        await user.save();
+
+        // Prevent sending back the password
+        const userData = user.toObject ? user.toObject() : user;
+        delete userData.password;
 
         res.status(200).json({
             success: true,
